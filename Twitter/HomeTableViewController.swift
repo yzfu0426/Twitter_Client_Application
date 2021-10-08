@@ -12,6 +12,8 @@ class HomeTableViewController: UITableViewController {
     
     var tweetArray = [NSDictionary]()
     var numberOfTweet: Int!
+    var user_information: [String: Any]!
+    var currIdx: Int?
     
     let myRefreshControl = UIRefreshControl()
 
@@ -27,7 +29,10 @@ class HomeTableViewController: UITableViewController {
         
         myRefreshControl.addTarget(self, action: #selector(loadTweets), for: .valueChanged)
         tableView.refreshControl = myRefreshControl
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 150
     }
+    
     
     @objc func loadTweets() {
         
@@ -47,6 +52,11 @@ class HomeTableViewController: UITableViewController {
             print("Could not retrive tweets! oh mo !!")
         })
         
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        loadTweets()
     }
     
     func loadMoreTweets() {
@@ -86,6 +96,19 @@ class HomeTableViewController: UITableViewController {
         if let imageData = data {
             cell.profileImageView.image = UIImage(data: imageData)
         }
+        
+        cell.setFavorite(tweetArray[indexPath.row]["favorited"] as! Bool)
+        cell.tweetId = tweetArray[indexPath.row]["id"] as! Int
+        cell.setRetweeted(tweetArray[indexPath.row]["retweeted"] as! Bool)
+        
+        let time = tweetArray[indexPath.row]["created_at"] as! String
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "EEE MMM dd HH:mm:ss Z yyyy"
+        let date = dateFormatter.date(from:time)!
+        //print(date.timeAgoDisplay())
+        cell.timeLabel.text = "\(date.timeAgoDisplay())"
+        
         return cell
     }
 
@@ -98,6 +121,50 @@ class HomeTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return tweetArray.count
     }
+    
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//        let vc = segue.destination as! TweetViewController
+//        //vc.user_information = tweetArray[currIdx!]["user"] as! [String : Any]
+//
+//        //print(tweetArray[currIdx!]["user"] as! [String : Any])
+// 
+//
+//    }
 
+//    @IBAction func onClicktoUserProfile(_ sender: UIButton) {
+//        let buttonPosition:CGPoint = (sender as AnyObject).convert(CGPoint.zero, to:self.tableView)
+//        currIdx = self.tableView.indexPathForRow(at: buttonPosition)?.row
+//
+//
+//        //print(currIdx!)
+//    }
+    
 
+}
+
+extension Date {
+    func timeAgoDisplay() -> String {
+        let secondsAgo = Int(Date().timeIntervalSince(self))
+        let minute = 60
+        let hour = minute * 60
+        let day = hour * 24
+        let week = day * 7
+        
+        if secondsAgo < minute {
+            return "\(secondsAgo) seconds ago"
+        } else if secondsAgo < hour {
+            return "\(secondsAgo / minute) minutes ago"
+        } else if secondsAgo < day {
+            return "\(secondsAgo / hour) hours ago"
+        } else if secondsAgo < week {
+            return "\(secondsAgo / day) weeks ago"
+        } else if secondsAgo < (week * 2) {
+            print("")
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+    
+        return formatter.string(from: self)
+    }
 }
